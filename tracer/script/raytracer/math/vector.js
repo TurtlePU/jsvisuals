@@ -79,4 +79,8 @@ export class Vector {
         let ortho = this.subtract(vector.scale(this.dot(vector) / vector.dot(vector)));
         return this.subtract(ortho.scale(2));
     }
+
+    toArray() {
+        return [this.x, this.y, this.z];
+    }
 }

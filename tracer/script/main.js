@@ -29,16 +29,23 @@ async function init_gl() {
     ]);
     gl.useProgram(program_info.program);
 
-    // TODO: fill attributes
+    twgl.setAttributePrefix('a_');
+
     buffer_info = twgl.createBufferInfoFromArrays(gl, {
-        position: {
+        vertex_position: {
             data: [
-                // ?
+                1.0, 1.0,
+                -1.0, 1.0,
+                1.0, -1.0,
+                -1.0, -1.0
             ],
-            numComponents: 3 // ?
+            numComponents: 2
+        },
+        plot_position: {
+            data: [],
+            numComponents: 3
         }
     });
-    twgl.setBuffersAndAttributes(gl, program_info, buffer_info);
 }
 
 var scene;
@@ -97,17 +104,19 @@ function init_drawing() {
 
 function update(dt) {
     scene.objects[0].position =
-        scene.objects[0].position.rotateZ(dt * 0.01 * 60 / 1000);
+        scene.objects[0].position.rotateZ(dt * 0.0006);
 }
 
 function render() {
-    context_2d.putImageData(
-        new ImageData(
-            scene.render(width, height),
-            width,
-            height
-        ), 0, 0
+    twgl.resizeCanvasToDisplaySize(gl.canvas);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    twgl.setAttribInfoBufferFromArray(gl,
+        buffer_info.attribs.plot_position,
+        scene.getPlotPosition(gl.canvas.width, gl.canvas.height)
     );
+    twgl.setBuffersAndAttributes(gl, program_info, buffer_info);
+    twgl.setUniforms(program_info, scene.getUniforms());
+    twgl.drawBufferInfo(gl, buffer_info);
 }
 
 async function getText(path) {

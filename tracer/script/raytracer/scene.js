@@ -1,24 +1,70 @@
 import { Camera } from './camera.js';
-import { default_features } from './utils.js';
 
 import { constrain, Vector } from './math/export.js';
+import { Light } from './light.js';
+import { RenderingFeatures } from './features.js';
+import { Sphere, TracedObject } from './primitives/export.js';
 
 export class Scene {
     constructor(
         camera = new Camera(),
         objects = [],
         light_sources = [],
-        background_features,
+        background_features = new RenderingFeatures(),
         max_depth = 3
     ) {
         this.camera = camera;
+        /** @type {TracedObject[]} */
         this.objects = objects;
+        /** @type {Light[]} */
         this.light_sources = light_sources;
-        this.background_features = {
-            ...default_features,
-            ...background_features
-        };
+        this.background_features = background_features;
         this.max_depth = max_depth;
+    }
+
+    getUniforms() {
+        /** @type {Sphere[]} */
+        let spheres = this.objects.filter(obj => obj.type == 'Sphere');
+        return {
+            u_cam_position: this.camera.position.toArray(),
+
+            u_sphere_count: spheres.length,
+            u_sphere_position: spheres.map(sph => sph.position.toArray()),
+            u_sphere_radius: spheres.map(sph => sph.radius),
+            u_sphere_color: spheres.map(sph => sph.rendering_features.color.toArray()),
+            u_sphere_lighting: spheres.map(sph => sph.rendering_features.lighting),
+            u_sphere_reflect: spheres.map(sph => sph.rendering_features.reflective),
+            u_sphere_ambient: spheres.map(sph => sph.rendering_features.ambient),
+
+            u_light_count: this.light_sources.length,
+            u_light_position: this.light_sources.map(src => src.position.toArray()),
+            u_light_lum: this.light_sources.map(src => src.luminosity),
+
+            u_bg_color: this.background_features.color.toArray(),
+            u_bg_lighting: this.background_features.lighting,
+            u_bg_reflect: this.background_features.reflective,
+            u_bg_ambient: this.background_features.ambient,
+
+            u_max_depth: this.max_depth,
+        }
+    }
+
+    getPlotPosition(width, height) {
+        let half_width = Math.tan(this.camera.field_of_view);
+        let half_height = half_width * height / width;
+
+        let right = this.camera.right.scale(half_width);
+        let up = this.camera.up.scale(half_height);
+
+        let direction = new Array(4).map((_, i) =>
+            this.camera.direction
+                .add(i % 2 ? right.negate() : right)
+                .add(i < 2 ? up.negate() : up)
+            .normalize()
+        );
+        return direction
+            .map(v => v.toArray())
+            .reduce((red, cur) => [...red, ...cur]);
     }
 
     render(width, height) {

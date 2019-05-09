@@ -1,15 +1,15 @@
 import { Vector } from '../math/export.js';
-import { default_features } from '../utils.js';
+import { RenderingFeatures } from '../features.js';
+import { TracedObject } from './object.js';
 
-export class Sphere {
-    constructor(position = new Vector(), radius = 1, rendering_features) {
-        this.type = 'Sphere';
-        this.position = position;
+export class Sphere extends TracedObject {
+    constructor(
+        position = new Vector(),
+        radius = 1,
+        rendering_features = new RenderingFeatures()
+    ) {
+        super('Sphere', position, rendering_features);
         this.radius = radius;
-        this.rendering_features = {
-            ...default_features,
-            ...rendering_features
-        };
     }
 
     ray_intersection(origin, direction) {
