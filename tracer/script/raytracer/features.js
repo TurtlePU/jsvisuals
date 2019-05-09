@@ -1,6 +1,6 @@
-import Vector from "./Vector.js";
+import { Vector } from './math/export.js';
 
-export default class RenderingFeatures {
+export class RenderingFeatures {
     constructor(color = new Vector(), lighting = 0, reflective = 0, ambient = 0) {
         this.color = color;
         this.lighting = lighting;

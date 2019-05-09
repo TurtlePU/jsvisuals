@@ -1,8 +1,7 @@
-import Vector from './Vector.js';
-import RenderingFeatures from './RenderingFeatures.js'
+import { Vector } from './math/Vector.js';
+import { RenderingFeatures } from './RenderingFeatures.js';
 
-
-export default class Sphere {
+export class Sphere {
     constructor(position = new Vector(), radius = 1, rendering_features = new RenderingFeatures()) {
         this.type = 'Sphere';
         this.position = position;

@@ -1,36 +1,20 @@
-import {
-    Camera,
-    primitives,
-    math,
-    RenderingFeatures,
-    Scene,
-    Light
-} from './raytracer/export.js';
+import * as twgl from './lib/twgl.js';
 
-const { Vector } = math;
-const { Sphere } = primitives;
-
-var canvas;
-var width, height;
-var context_2d;
-
+var gl;
 var scene;
 
-var playing;
-var prev;
-
 window.onload = async () => {
-    canvas = document.getElementById('canvas');
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-    context_2d = canvas.getContext('2d');
+    gl = twgl.getContext(
+        document.getElementById('canvas')
+    );
 
-    let position = new Vector(5, 0, -1);
+    let camera_pos = new Vector(5, 0, -1);
+    let sun_pos = new Vector(0, 0, -2);
     scene = new Scene(
         new Camera(
-            position,
-            new Vector(0, 0, -1)
-                .subtract(position)
+            camera_pos,
+            sun_pos
+                .subtract(camera_pos)
                 .normalize(),
             new Vector(0, 0, -1)
         ),
@@ -46,7 +30,7 @@ window.onload = async () => {
                 )
             ),
             new Sphere(
-                new Vector(0, 0, -2),
+                sun_pos,
                 0.5,
                 new RenderingFeatures(
                     new Vector(0, 0, 255),
@@ -61,18 +45,21 @@ window.onload = async () => {
         ]
     );
 
-    playing = true;
-    draw(prev = performance.now());
+    init_drawing();
 };
 
-function draw(time) {
-    update(time - prev);
-    prev = time;
-    render();
-    if (playing) {
-        requestAnimationFrame(draw);
-    }
-};
+function init_drawing() {
+    let playing = true;
+    let prev;
+    (function draw(time) {
+        update(time - prev);
+        prev = time;
+        render();
+        if (playing) {
+            requestAnimationFrame(draw);
+        }
+    })(prev = performance.now());
+}
 
 function update(dt) {
     scene.objects[0].position =

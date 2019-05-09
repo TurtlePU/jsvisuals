@@ -1,4 +1,4 @@
-export default class Vector {
+export class Vector {
     constructor(x = 0, y = 0, z = 0) {
         if (x instanceof Vector) {
             this.x = x.x;

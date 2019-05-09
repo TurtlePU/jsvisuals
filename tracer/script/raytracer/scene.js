@@ -1,15 +1,17 @@
-import Camera from './Camera.js';
-import Vector from './Vector.js';
-import RenderingFeatures from './RenderingFeatures.js';
-import utils from './utils.js';
+import { Camera } from './camera.js';
+import { RenderingFeatures } from './features.js';
+import { constrain } from './utils.js';
 
+import { Vector } from './math/export.js';
 
-export default class Scene {
-    constructor(camera = new Camera(),
-                objects = [],
-                light_sources = [],
-                background_features = new RenderingFeatures(),
-                max_depth = 3) {
+export class Scene {
+    constructor(
+        camera = new Camera(),
+        objects = [],
+        light_sources = [],
+        background_features = new RenderingFeatures(),
+        max_depth = 3
+    ) {
         this.camera = camera;
         this.objects = objects;
         this.light_sources = light_sources;
@@ -26,7 +28,6 @@ export default class Scene {
         let pixel_width = camera_width / (width - 1);
         let pixel_height = camera_height / (height - 1);
 
-
         for (let y = 0; y < height; ++y) {
             for (let x = 0; x < width; ++x) {
                 let right = this.camera.right.scale(x * pixel_width - half_width);
@@ -35,9 +36,9 @@ export default class Scene {
                 let direction = this.camera.direction.add(right).add(up).normalize();
 
                 let color = this.trace(this.camera.position, direction);
-                color.x = utils.constrain(color.x, 0, 255);
-                color.y = utils.constrain(color.y, 0, 255);
-                color.z = utils.constrain(color.z, 0, 255);
+                color.x = constrain(color.x, 0, 255);
+                color.y = constrain(color.y, 0, 255);
+                color.z = constrain(color.z, 0, 255);
 
                 data[4 * (x + y * width) + 0] = color.x;
                 data[4 * (x + y * width) + 1] = color.y;
