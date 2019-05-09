@@ -1,78 +1,99 @@
+import * as twgl from './external/twgl.js';
+
 import {
-    Camera,
-    primitives,
     math,
-    RenderingFeatures,
+    primitives,
+    Camera,
+    Light,
     Scene,
-    Light
 } from './raytracer/export.js';
 
-const { Vector } = math;
-const { Sphere } = primitives;
+window.onload = async () => {
+    await init_gl();
+    init_scene();
+    init_drawing();
+};
 
-var canvas;
-var width, height;
-var context_2d;
+var gl;
+var program_info;
+var buffer_info;
+
+async function init_gl() {
+    gl = twgl.getContext(
+        document.getElementById('canvas')
+    );
+
+    program_info = twgl.createProgramInfo(gl, [
+        await getText('shaders/vertex.glsl'),
+        await getText('shaders/fragment.glsl')
+    ]);
+    gl.useProgram(program_info.program);
+
+    // TODO: fill attributes
+    buffer_info = twgl.createBufferInfoFromArrays(gl, {
+        position: {
+            data: [
+                // ?
+            ],
+            numComponents: 3 // ?
+        }
+    });
+    twgl.setBuffersAndAttributes(gl, program_info, buffer_info);
+}
 
 var scene;
 
-var playing;
-var prev;
-
-window.onload = async () => {
-    canvas = document.getElementById('canvas');
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-    context_2d = canvas.getContext('2d');
-
-    let position = new Vector(5, 0, -1);
+function init_scene() {
+    let camera_pos = new math.Vector(5, 0, -1);
+    let sun_pos = new math.Vector(0, 0, -2);
     scene = new Scene(
         new Camera(
-            position,
-            new Vector(0, 0, -1)
-                .subtract(position)
+            camera_pos,
+            sun_pos
+                .subtract(camera_pos)
                 .normalize(),
-            new Vector(0, 0, -1)
+            new math.Vector(0, 0, -1)
         ),
         [
-            new Sphere(
-                new Vector(-1, 0, -2),
+            new primitives.Sphere(
+                new math.Vector(-1, 0, -2),
                 0.3,
-                new RenderingFeatures(
-                    new Vector(255, 0, 0),
-                    1.0,
-                    0.5,
-                    0.0
-                )
+                {
+                    color: new math.Vector(255, 0, 0),
+                    lighting: 1.0,
+                    reflective: 0.5,
+                    ambient: 0.0
+                }
             ),
-            new Sphere(
-                new Vector(0, 0, -2),
+            new primitives.Sphere(
+                sun_pos,
                 0.5,
-                new RenderingFeatures(
-                    new Vector(0, 0, 255),
-                    1.0,
-                    0.9,
-                    0.3
-                )
+                {
+                    color: new math.Vector(0, 0, 255),
+                    lighting: 1.0,
+                    reflective: 0.9,
+                    ambient: 0.3
+                }
             )
         ],
         [
-            new Light(new Vector(100, 0, 0)),
+            new Light(new math.Vector(100, 0, 0)),
         ]
     );
+}
 
-    playing = true;
-    draw(prev = performance.now());
-};
-
-function draw(time) {
-    update(time - prev);
-    prev = time;
-    render();
-    if (playing) {
-        requestAnimationFrame(draw);
-    }
-};
+function init_drawing() {
+    let playing = true;
+    let prev;
+    (function draw(time) {
+        update(time - prev);
+        prev = time;
+        render();
+        if (playing) {
+            requestAnimationFrame(draw);
+        }
+    })(prev = performance.now());
+}
 
 function update(dt) {
     scene.objects[0].position =
@@ -87,4 +108,8 @@ function render() {
             height
         ), 0, 0
     );
+}
+
+async function getText(path) {
+    return (await fetch(path)).text();
 }

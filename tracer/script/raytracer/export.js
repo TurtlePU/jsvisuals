@@ -1,5 +1,4 @@
 export * from './camera.js';
-export * from './features.js';
 export * from './light.js';
 export * from './scene.js';
 export * from './utils.js';

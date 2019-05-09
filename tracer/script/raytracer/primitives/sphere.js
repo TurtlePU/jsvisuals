@@ -1,12 +1,15 @@
 import { Vector } from '../math/export.js';
-import { RenderingFeatures } from '../features.js';
+import { default_features } from '../utils.js';
 
 export class Sphere {
-    constructor(position = new Vector(), radius = 1, rendering_features = new RenderingFeatures()) {
+    constructor(position = new Vector(), radius = 1, rendering_features) {
         this.type = 'Sphere';
         this.position = position;
         this.radius = radius;
-        this.rendering_features = rendering_features;
+        this.rendering_features = {
+            ...default_features,
+            ...rendering_features
+        };
     }
 
     ray_intersection(origin, direction) {

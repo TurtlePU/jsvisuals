@@ -1,21 +1,23 @@
 import { Camera } from './camera.js';
-import { RenderingFeatures } from './features.js';
-import { constrain } from './utils.js';
+import { default_features } from './utils.js';
 
-import { Vector } from './math/export.js';
+import { constrain, Vector } from './math/export.js';
 
 export class Scene {
     constructor(
         camera = new Camera(),
         objects = [],
         light_sources = [],
-        background_features = new RenderingFeatures(),
+        background_features,
         max_depth = 3
     ) {
         this.camera = camera;
         this.objects = objects;
         this.light_sources = light_sources;
-        this.background_features = background_features;
+        this.background_features = {
+            ...default_features,
+            ...background_features
+        };
         this.max_depth = max_depth;
     }
 
