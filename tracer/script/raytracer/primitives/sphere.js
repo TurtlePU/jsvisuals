@@ -1,5 +1,5 @@
-import { Vector } from './math/Vector.js';
-import { RenderingFeatures } from './RenderingFeatures.js';
+import { Vector } from '../math/export.js';
+import { RenderingFeatures } from '../features.js';
 
 export class Sphere {
     constructor(position = new Vector(), radius = 1, rendering_features = new RenderingFeatures()) {
