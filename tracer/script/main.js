@@ -4,7 +4,6 @@ import {
     math,
     primitives,
     Camera,
-    Light,
     Scene,
 } from './raytracer/export.js';
 
@@ -84,7 +83,10 @@ function init_scene() {
             )
         ],
         [
-            new Light(new math.Vector(100, 0, 0)),
+            {
+                position: new math.Vector(100, 0, 0),
+                luminosity: 1
+            },
         ]
     );
 }

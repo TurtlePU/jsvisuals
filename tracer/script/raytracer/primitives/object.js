@@ -1,9 +1,11 @@
 import { Vector } from '../math/export.js';
-import { RenderingFeatures } from '../features.js';
+import { RenderingFeatures } from '../util.js';
+
+export const OBJECT_TYPE = 'Object';
 
 export class TracedObject {
     constructor(
-        type = 'object',
+        type = OBJECT_TYPE,
         position = new Vector(),
         rendering_features = new RenderingFeatures()
     ) {
