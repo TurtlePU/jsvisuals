@@ -8,9 +8,9 @@ export class Camera {
         field_of_view = Math.PI / 3
     ) {
         this.position = position;
-        this.direction = direction;
-        this.right = right;
-        this.up = direction.cross(right);
+        this.direction = direction.normalize();
+        this.up = right.normalize().cross(this.direction);
+        this.right = this.direction.cross(this.up);
         this.field_of_view = field_of_view;
     }
 }
