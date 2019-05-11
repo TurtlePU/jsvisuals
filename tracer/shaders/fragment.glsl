@@ -26,15 +26,8 @@ uniform vec3 u_light_position[MAX_LIGHTS];
 uniform float u_light_lum[MAX_LIGHTS];
 
 uniform vec3 u_bg_color;
-uniform float u_bg_lighting;
-uniform float u_bg_reflect;
-uniform float u_bg_ambient;
 
 uniform uint u_max_depth;
-
-const uint MAX_SKIP = uint(64);
-uint skip_count;
-vec2 skip[MAX_SKIP];
 
 vec3 sphere_normal(vec3 point, uint i) {
     return normalize(point - u_sphere_position[i]);
@@ -56,16 +49,6 @@ float ray_intersection_sphere(vec3 origin, vec3 direction, uint i) {
 vec3 intersect(vec3 origin, vec3 direction) {
     vec3 ans = vec3(INFINITY, NONE, 0);
     for (uint i = uint(0); i != u_sphere_count; ++i) {
-        bool to_skip = false;
-        for (uint j = uint(0); j != skip_count; ++j) {
-            if (skip[j].x == SPHERE && skip[j].y == float(i)) {
-                to_skip = true;
-                break;
-            }
-        }
-        if (to_skip) {
-            continue;
-        }
         float dist = ray_intersection_sphere(origin, direction, i);
         if (dist > 0.0 && dist < ans.x) {
             ans = vec3(dist, SPHERE, i);
@@ -75,19 +58,14 @@ vec3 intersect(vec3 origin, vec3 direction) {
 }
 
 bool is_visible(vec3 point, vec3 eye) {
-    return intersect(point, normalize(eye - point)).x != INFINITY;
+    return intersect(point, normalize(eye - point)).x >= length(eye - point);
 }
 
-vec3 trace(vec3 origin, vec3 direction, uint depth);
-
-vec3 surface_sphere(vec3 direction, vec3 point, uint i, uint depth) {
-    vec3 color = vec3(0, 0, 0);
+vec3 surface_sphere(vec3 direction, vec3 point, uint i) {
     float lambertian = 0.0;
-    vec3 normal = sphere_normal(point, i);
     if (u_sphere_lighting[i] != 0.0) {
+        vec3 normal = sphere_normal(point, i);
         for (uint j = uint(0); j != u_light_count; ++j) {
-            skip_count = uint(1);
-            skip[0] = vec2(SPHERE, i);
             if (is_visible(point, u_light_position[j])) {
                 float amount = dot(normal, normalize(u_light_position[j] - point));
                 if (amount > 0.0) {
@@ -97,34 +75,41 @@ vec3 surface_sphere(vec3 direction, vec3 point, uint i, uint depth) {
         }
     }
     lambertian = min(1.0, lambertian);
-    vec3 reflected = reflect(direction, normal);
-    if (u_sphere_reflect[i] != 0.0) {
-        vec3 reflected_color = trace(point, reflected, depth + uint(1));
-        color += reflected_color * u_sphere_reflect[i];
-    }
-    color += u_sphere_color[i] * (lambertian * u_sphere_lighting[i] + u_sphere_ambient[i]);
-    return color;
+    return u_sphere_color[i] * (
+        lambertian * u_sphere_lighting[i] + u_sphere_ambient[i]
+    );
 }
 
-vec3 trace(vec3 origin, vec3 direction, uint depth) {
-    if (depth == u_max_depth) {
-        return vec3(0, 0, 0);
+vec3 trace(vec3 origin, vec3 direction) {
+    vec3 result = vec3(0, 0, 0);
+    float reflection = 1.0;
+    for (uint depth = uint(0); depth != u_max_depth; ++depth) {
+        vec3 intersection = intersect(origin, direction);
+        if (intersection.x == INFINITY) {
+            result +=
+                reflection *
+                u_bg_color;
+            break;
+        }
+        vec3 point = origin + direction * intersection.x;
+        if (intersection.y == SPHERE) {
+            uint i = uint(intersection.z);
+            result +=
+                reflection *
+                surface_sphere(direction, point, i);
+            reflection *= u_sphere_reflect[i];
+            if (reflection < 0.0001) {
+                break;
+            }
+            origin = point;
+            direction = reflect(direction, sphere_normal(point, i));
+        }
     }
-    skip_count = uint(0);
-    vec3 intersection = intersect(origin, direction);
-    if (intersection.x == INFINITY) {
-        return u_bg_color;
-    }
-    vec3 point = origin + direction * intersection.x;
-    if (intersection.y == SPHERE) {
-        return surface_sphere(direction, point, uint(intersection.z), depth);
-    } else {
-        return vec3(0, 0, 0);
-    }
+    return result;
 }
 
 out vec4 color;
 
 void main(void) {
-    color = vec4(trace(u_cam_position, v_position, uint(0)), 1);
+    color = vec4(trace(u_cam_position, normalize(v_position)), 1);
 }
