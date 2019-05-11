@@ -111,12 +111,12 @@ function render() {
     twgl.resizeCanvasToDisplaySize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     twgl.setAttribInfoBufferFromArray(gl,
-        buffer_info.attribs.plot_position,
+        buffer_info.attribs.a_plot_position,
         scene.getPlotPosition(gl.canvas.width, gl.canvas.height)
     );
     twgl.setBuffersAndAttributes(gl, program_info, buffer_info);
     twgl.setUniforms(program_info, scene.getUniforms());
-    twgl.drawBufferInfo(gl, buffer_info);
+    twgl.drawBufferInfo(gl, buffer_info, gl.TRIANGLE_STRIP);
 }
 
 async function getText(path) {
