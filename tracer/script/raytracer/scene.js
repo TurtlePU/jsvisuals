@@ -1,9 +1,19 @@
 import { Camera } from './camera.js';
 
-import { constrain, Vector } from './math/export.js';
+import { constrain, flatten, Vector } from './math/export.js';
 import { Light } from './light.js';
 import { RenderingFeatures } from './features.js';
 import { Sphere, TracedObject } from './primitives/export.js';
+
+const MAX_SPHERES = 64;
+const MAX_LIGHTS = 64;
+
+function fitsize(
+    /** @type {any[]} */ arr,
+    /** @type {number} */ size
+) {
+    return [...arr, ...new Array(size - arr.length).fill(0)];
+}
 
 export class Scene {
     constructor(
@@ -29,21 +39,34 @@ export class Scene {
             u_cam_position: this.camera.position.toArray(),
 
             u_sphere_count: spheres.length,
-            u_sphere_position: spheres.map(sph => sph.position.toArray()),
-            u_sphere_radius: spheres.map(sph => sph.radius),
-            u_sphere_color: spheres.map(sph => sph.rendering_features.color.toArray()),
-            u_sphere_lighting: spheres.map(sph => sph.rendering_features.lighting),
-            u_sphere_reflect: spheres.map(sph => sph.rendering_features.reflective),
-            u_sphere_ambient: spheres.map(sph => sph.rendering_features.ambient),
+            u_sphere_position: fitsize(
+                flatten(spheres.map(sph => sph.position)), MAX_SPHERES * 3
+            ),
+            u_sphere_radius: fitsize(
+                spheres.map(sph => sph.radius), MAX_SPHERES
+            ),
+            u_sphere_color: fitsize(
+                flatten(spheres.map(sph => sph.rendering_features.color)), MAX_SPHERES * 3
+            ).map(c => c / 255),
+            u_sphere_lighting: fitsize(
+                spheres.map(sph => sph.rendering_features.lighting), MAX_SPHERES
+            ),
+            u_sphere_reflect: fitsize(
+                spheres.map(sph => sph.rendering_features.reflective), MAX_SPHERES
+            ),
+            u_sphere_ambient: fitsize(
+                spheres.map(sph => sph.rendering_features.ambient), MAX_SPHERES
+            ),
 
             u_light_count: this.light_sources.length,
-            u_light_position: this.light_sources.map(src => src.position.toArray()),
-            u_light_lum: this.light_sources.map(src => src.luminosity),
+            u_light_position: fitsize(
+                flatten(this.light_sources.map(src => src.position)), MAX_LIGHTS * 3
+            ),
+            u_light_lum: fitsize(
+                this.light_sources.map(src => src.luminosity), MAX_LIGHTS
+            ),
 
-            u_bg_color: this.background_features.color.toArray(),
-            u_bg_lighting: this.background_features.lighting,
-            u_bg_reflect: this.background_features.reflective,
-            u_bg_ambient: this.background_features.ambient,
+            u_bg_color: this.background_features.color.toArray().map(c => c / 255),
 
             u_max_depth: this.max_depth,
         }
@@ -56,15 +79,13 @@ export class Scene {
         let right = this.camera.right.scale(half_width);
         let up = this.camera.up.scale(half_height);
 
-        let direction = new Array(4).map((_, i) =>
+        let direction = new Array(4).fill('').map((_, i) => 
             this.camera.direction
-                .add(i % 2 ? right.negate() : right)
-                .add(i < 2 ? up.negate() : up)
+            .add(i % 2 ? right.negate() : right)
+            .add(i < 2 ? up : up.negate())
             .normalize()
         );
-        return direction
-            .map(v => v.toArray())
-            .reduce((red, cur) => [...red, ...cur]);
+        return flatten(direction);
     }
 
     render(width, height) {
