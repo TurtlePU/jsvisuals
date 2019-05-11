@@ -67,7 +67,7 @@ export class Scene {
         let right = this.camera.right.scale(half_width);
         let up = this.camera.up.scale(half_height);
 
-        let direction = new Array(4).fill('').map((_, i) => 
+        let direction = [...new Array(4).keys()].map(i => 
             this.camera.direction
             .add(i % 2 ? right.negate() : right)
             .add(i < 2 ? up : up.negate())
